@@ -1,34 +1,37 @@
-import { EventInput } from '@fullcalendar/core'
-import { EventSourceDef, DateRange, addDays } from '@fullcalendar/core/internal'
-import * as ICAL from 'ical.js'
-import { IcalExpander } from './ical-expander/IcalExpander.js'
+import { EventInput } from '@fullcalendar/core';
+import {
+  EventSourceDef,
+  DateRange,
+  addDays,
+} from '@fullcalendar/core/internal';
+import * as ICAL from 'ical.js';
+import { IcalExpander } from './ical-expander/IcalExpander.js';
 
 interface ICalFeedMeta {
-  url: string
-  format: 'ics', // for EventSourceApi
-  internalState?: InternalState // HACK. TODO: use classes in future
+  url: string;
+  format: 'ics'; // for EventSourceApi
+  internalState?: InternalState; // HACK. TODO: use classes in future
 }
 
 interface InternalState {
-  iCalExpanderPromise: Promise<IcalExpander>
-  response: Response | null
+  iCalExpanderPromise: Promise<IcalExpander>;
+  response: Response | null;
 }
 
 export const eventSourceDef: EventSourceDef<ICalFeedMeta> = {
-
   parseMeta(refined) {
     if (refined.url && refined.format === 'ics') {
       return {
         url: refined.url,
         format: 'ics',
-      }
+      };
     }
-    return null
+    return null;
   },
 
   fetch(arg, successCallback, errorCallback) {
-    let meta: ICalFeedMeta = arg.eventSource.meta
-    let { internalState } = meta
+    let meta: ICalFeedMeta = arg.eventSource.meta;
+    let { internalState } = meta;
 
     /*
     NOTE: isRefetch is a HACK. we would do the recurring-expanding in a separate plugin hook,
@@ -37,41 +40,40 @@ export const eventSourceDef: EventSourceDef<ICalFeedMeta> = {
     if (!internalState || arg.isRefetch) {
       internalState = meta.internalState = {
         response: null,
-        iCalExpanderPromise: fetch(
-          meta.url,
-          { method: 'GET' },
-        ).then((response) => {
-          return response.text().then((icsText) => {
-            internalState.response = response
-            return new IcalExpander({
-              ics: icsText,
-              skipInvalidDates: true,
-            })
-          })
-        }),
-      }
+        iCalExpanderPromise: fetch(meta.url, { method: 'GET' }).then(
+          (response) => {
+            return response.text().then((icsText) => {
+              internalState.response = response;
+              return new IcalExpander({
+                ics: icsText,
+                skipInvalidDates: true,
+              });
+            });
+          }
+        ),
+      };
     }
 
-    internalState.iCalExpanderPromise.then(
-      (iCalExpander) => {
-        successCallback({
-          rawEvents: expandICalEvents(iCalExpander, arg.range),
-          response: internalState.response,
-        })
-      },
-      errorCallback,
-    )
+    internalState.iCalExpanderPromise.then((iCalExpander) => {
+      successCallback({
+        rawEvents: expandICalEvents(iCalExpander, arg.range),
+        response: internalState.response,
+      });
+    }, errorCallback);
   },
-}
+};
 
-function expandICalEvents(iCalExpander: IcalExpander, range: DateRange): EventInput[] {
+function expandICalEvents(
+  iCalExpander: IcalExpander,
+  range: DateRange
+): EventInput[] {
   // expand the range. because our `range` is timeZone-agnostic UTC
   // or maybe because ical.js always produces dates in local time? i forget
-  let rangeStart = addDays(range.start, -1)
-  let rangeEnd = addDays(range.end, 1)
+  let rangeStart = addDays(range.start, -1);
+  let rangeEnd = addDays(range.end, 1);
 
-  let iCalRes = iCalExpander.between(rangeStart, rangeEnd) // end inclusive. will give extra results
-  let expanded: EventInput[] = []
+  let iCalRes = iCalExpander.between(rangeStart, rangeEnd); // end inclusive. will give extra results
+  let expanded: EventInput[] = [];
 
   // TODO: instead of using startDate/endDate.toString to communicate allDay,
   // we can query startDate/endDate.isDate. More efficient to avoid formatting/reparsing.
@@ -81,29 +83,40 @@ function expandICalEvents(iCalExpander: IcalExpander, range: DateRange): EventIn
     expanded.push({
       ...buildNonDateProps(iCalEvent),
       start: iCalEvent.startDate.toString(),
-      end: (specifiesEnd(iCalEvent) && iCalEvent.endDate)
-        ? iCalEvent.endDate.toString()
-        : null,
-    })
+      end:
+        specifiesEnd(iCalEvent) && iCalEvent.endDate
+          ? iCalEvent.endDate.toString()
+          : null,
+    });
   }
 
   // recurring event instances
   for (let iCalOccurence of iCalRes.occurrences) {
-    let iCalEvent = iCalOccurence.item
+    let iCalEvent = iCalOccurence.item;
     expanded.push({
       ...buildNonDateProps(iCalEvent),
       start: iCalOccurence.startDate.toString(),
-      end: (specifiesEnd(iCalEvent) && iCalOccurence.endDate)
-        ? iCalOccurence.endDate.toString()
-        : null,
-    })
+      end:
+        specifiesEnd(iCalEvent) && iCalOccurence.endDate
+          ? iCalOccurence.endDate.toString()
+          : null,
+    });
   }
 
-  return expanded
+  return expanded;
 }
 
 function buildNonDateProps(iCalEvent: ICAL.Event): EventInput {
-  return {
+  const commonProps = [
+    'uid',
+    'summary',
+    'url',
+    'location',
+    'organizer',
+    'description',
+  ];
+  const result = {
+    id: iCalEvent.uid,
     title: iCalEvent.summary,
     url: extractEventUrl(iCalEvent),
     extendedProps: {
@@ -111,15 +124,23 @@ function buildNonDateProps(iCalEvent: ICAL.Event): EventInput {
       organizer: iCalEvent.organizer,
       description: iCalEvent.description,
     },
+  };
+  for (const prop in iCalEvent) {
+    if (!commonProps.includes(prop)) {
+      result.extendedProps[prop] = iCalEvent[prop];
+    }
   }
+  return result;
 }
 
 function extractEventUrl(iCalEvent: ICAL.Event): string {
-  let urlProp = iCalEvent.component.getFirstProperty('url')
-  return urlProp ? urlProp.getFirstValue() : ''
+  let urlProp = iCalEvent.component.getFirstProperty('url');
+  return urlProp ? urlProp.getFirstValue() : '';
 }
 
 function specifiesEnd(iCalEvent: ICAL.Event) {
-  return Boolean(iCalEvent.component.getFirstProperty('dtend')) ||
+  return (
+    Boolean(iCalEvent.component.getFirstProperty('dtend')) ||
     Boolean(iCalEvent.component.getFirstProperty('duration'))
+  );
 }
