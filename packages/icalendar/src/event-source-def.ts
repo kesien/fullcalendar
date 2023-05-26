@@ -6,10 +6,12 @@ import {
 } from '@fullcalendar/core/internal';
 import * as ICAL from 'ical.js';
 import { IcalExpander } from './ical-expander/IcalExpander.js';
+import * as moment from 'moment-timezone'
 
 interface ICalFeedMeta {
   url: string;
-  format: 'ics'; // for EventSourceApi
+  format: 'ics';
+  headers: any;
   internalState?: InternalState; // HACK. TODO: use classes in future
 }
 
@@ -24,6 +26,7 @@ export const eventSourceDef: EventSourceDef<ICalFeedMeta> = {
       return {
         url: refined.url,
         format: 'ics',
+        headers: refined.extraParams['headers']
       };
     }
     return null;
@@ -31,7 +34,7 @@ export const eventSourceDef: EventSourceDef<ICalFeedMeta> = {
 
   fetch(arg, successCallback, errorCallback) {
     let meta: ICalFeedMeta = arg.eventSource.meta;
-    let { internalState } = meta;
+    let { internalState, headers } = meta;
 
     /*
     NOTE: isRefetch is a HACK. we would do the recurring-expanding in a separate plugin hook,
@@ -40,7 +43,7 @@ export const eventSourceDef: EventSourceDef<ICalFeedMeta> = {
     if (!internalState || arg.isRefetch) {
       internalState = meta.internalState = {
         response: null,
-        iCalExpanderPromise: fetch(meta.url, { method: 'GET' }).then(
+        iCalExpanderPromise: fetch(meta.url, { method: 'GET', headers }).then(
           (response) => {
             return response.text().then((icsText) => {
               internalState.response = response;
@@ -82,7 +85,7 @@ function expandICalEvents(
   for (let iCalEvent of iCalRes.events) {
     expanded.push({
       ...buildNonDateProps(iCalEvent),
-      start: iCalEvent.startDate.toString(),
+      start: moment.tz(iCalEvent.startDate.toJSDate(), icalEvent.timezone),
       end:
         specifiesEnd(iCalEvent) && iCalEvent.endDate
           ? iCalEvent.endDate.toString()
@@ -126,7 +129,7 @@ function buildNonDateProps(iCalEvent: ICAL.Event): EventInput {
     },
   };
   for (const prop in iCalEvent) {
-    if (!commonProps.includes(prop)) {
+    if (commonProps.indexOf(prop) < 0) {
       result.extendedProps[prop] = iCalEvent[prop];
     }
   }
