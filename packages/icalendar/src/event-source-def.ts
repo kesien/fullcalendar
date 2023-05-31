@@ -79,11 +79,16 @@ function expandICalEvents(
 
   // single events
   for (let iCalEvent of iCalRes.events) {
-    const startDateUtc = DateTime.fromISO(iCalEvent.startDate.toJSDate().toISOString(), { zone: 'utc' });
-    const endDateUtc = DateTime.fromISO(iCalEvent.endDate.toJSDate().toISOString(), { zone: 'utc' });
-
-    const startDate = startDateUtc.setZone(iCalEvent.startDate.timezone);
-    const endDate = endDateUtc.setZone(iCalEvent.endDate.timezone);
+    const startDate = DateTime.fromFormat(
+      iCalEvent.startDate.toString(),
+      'yyyy-MM-dd\'T\'HH:mm:ss',
+      { zone: 'utc' }
+    ).setZone(iCalEvent.startDate.timezone)
+    const endDate = DateTime.fromFormat(
+      iCalEvent.endDate.toString(),
+      'yyyyMMdd\'T\'HHmmss',
+      { zone: 'utc' }
+    ).setZone(iCalEvent.endDate.timezone)
     expanded.push({
       ...buildNonDateProps(iCalEvent),
       start: startDate.toJSDate(),
@@ -93,11 +98,16 @@ function expandICalEvents(
 
   // recurring event instances
   for (let iCalOccurence of iCalRes.occurrences) {
-    const startDateUtc = DateTime.fromISO(iCalOccurence.startDate.toJSDate().toISOString(), { zone: 'utc' });
-    const endDateUtc = DateTime.fromISO(iCalOccurence.endDate.toJSDate().toISOString(), { zone: 'utc' });
-
-    const startDate = startDateUtc.setZone(iCalOccurence.startDate.timezone);
-    const endDate = endDateUtc.setZone(iCalOccurence.endDate.timezone);
+    const startDate = DateTime.fromFormat(
+      iCalOccurence.startDate.toString(),
+      'yyyy-MM-dd\'T\'HH:mm:ss',
+      { zone: 'utc' }
+    ).setZone(iCalOccurence.startDate.timezone)
+    const endDate = DateTime.fromFormat(
+      iCalOccurence.endDate.toString(),
+      'yyyyMMdd\'T\'HHmmss',
+      { zone: 'utc' }
+    ).setZone(iCalOccurence.endDate.timezone)
     let iCalEvent = iCalOccurence.item
     expanded.push({
       ...buildNonDateProps(iCalEvent),
