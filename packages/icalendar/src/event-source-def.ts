@@ -80,13 +80,13 @@ function expandICalEvents(
   // single events
   for (let iCalEvent of iCalRes.events) {
     const startDate = DateTime.fromFormat(
-      iCalEvent.startDate.toICS(),
+      iCalEvent.startDate,
       "yyyyMMdd'T'HHmmss",
       { zone: iCalEvent.timezone },
     )
 
     const endDate = DateTime.fromFormat(
-      iCalEvent.endDate.toICS(),
+      iCalEvent.endDate,
       "yyyyMMdd'T'HHmmss",
       { zone: iCalEvent.timezone },
     )
@@ -100,13 +100,13 @@ function expandICalEvents(
   // recurring event instances
   for (let iCalOccurence of iCalRes.occurrences) {
     const startDate = DateTime.fromFormat(
-      iCalOccurence.startDate.toICS(),
+      iCalOccurence.startDate,
       "yyyyMMdd'T'HHmmss",
       { zone: iCalOccurence.timezone },
     )
 
     const endDate = DateTime.fromFormat(
-      iCalOccurence.endDate.toICS(),
+      iCalOccurence.endDate,
       "yyyyMMdd'T'HHmmss",
       { zone: iCalOccurence.timezone },
     )
