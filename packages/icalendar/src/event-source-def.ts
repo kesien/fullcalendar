@@ -79,42 +79,30 @@ function expandICalEvents(
 
   // single events
   for (let iCalEvent of iCalRes.events) {
-    const startDate = DateTime.fromFormat(
-      iCalEvent.startDate,
-      "yyyyMMdd'T'HHmmss",
-      { zone: iCalEvent.timezone },
-    )
+    const startDateUtc = DateTime.fromISO(iCalEvent.startDate.toJSDate().toISOString(), { zone: 'utc' });
+    const endDateUtc = DateTime.fromISO(iCalEvent.endDate.toJSDate().toISOString(), { zone: 'utc' });
 
-    const endDate = DateTime.fromFormat(
-      iCalEvent.endDate,
-      "yyyyMMdd'T'HHmmss",
-      { zone: iCalEvent.timezone },
-    )
+    const startDate = startDateUtc.setZone(iCalEvent.startDate.timezone);
+    const endDate = endDateUtc.setZone(iCalEvent.endDate.timezone);
     expanded.push({
       ...buildNonDateProps(iCalEvent),
-      start: startDate,
-      end: specifiesEnd(iCalEvent) && iCalEvent.endDate ? endDate : null,
+      start: startDate.toJSDate(),
+      end: specifiesEnd(iCalEvent) && iCalEvent.endDate ? endDate.toJSDate() : null,
     })
   }
 
   // recurring event instances
   for (let iCalOccurence of iCalRes.occurrences) {
-    const startDate = DateTime.fromFormat(
-      iCalOccurence.startDate,
-      "yyyyMMdd'T'HHmmss",
-      { zone: iCalOccurence.timezone },
-    )
+    const startDateUtc = DateTime.fromISO(iCalOccurence.startDate.toJSDate().toISOString(), { zone: 'utc' });
+    const endDateUtc = DateTime.fromISO(iCalOccurence.endDate.toJSDate().toISOString(), { zone: 'utc' });
 
-    const endDate = DateTime.fromFormat(
-      iCalOccurence.endDate,
-      "yyyyMMdd'T'HHmmss",
-      { zone: iCalOccurence.timezone },
-    )
+    const startDate = startDateUtc.setZone(iCalOccurence.startDate.timezone);
+    const endDate = endDateUtc.setZone(iCalOccurence.endDate.timezone);
     let iCalEvent = iCalOccurence.item
     expanded.push({
       ...buildNonDateProps(iCalEvent),
-      start: startDate,
-      end: specifiesEnd(iCalEvent) && iCalOccurence.endDate ? endDate : null,
+      start: startDate.toJSDate(),
+      end: specifiesEnd(iCalEvent) && iCalOccurence.endDate ? endDate.toJSDate() : null,
     })
   }
 
