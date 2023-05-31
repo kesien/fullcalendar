@@ -86,7 +86,7 @@ function expandICalEvents(
     ).setZone(iCalEvent.startDate.timezone)
     const endDate = DateTime.fromFormat(
       iCalEvent.endDate.toString(),
-      'yyyyMMdd\'T\'HHmmss',
+      'yyyy-MM-dd\'T\'HH:mm:ss',
       { zone: 'utc' }
     ).setZone(iCalEvent.endDate.timezone)
     expanded.push({
@@ -105,7 +105,7 @@ function expandICalEvents(
     ).setZone(iCalOccurence.startDate.timezone)
     const endDate = DateTime.fromFormat(
       iCalOccurence.endDate.toString(),
-      'yyyyMMdd\'T\'HHmmss',
+      'yyyy-MM-dd\'T\'HH:mm:ss',
       { zone: 'utc' }
     ).setZone(iCalOccurence.endDate.timezone)
     let iCalEvent = iCalOccurence.item

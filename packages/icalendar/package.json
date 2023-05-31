@@ -1,6 +1,6 @@
 {
   "name": "icalendar_extension",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "title": "FullCalendar iCalendar Plugin Extension",
   "description": "Display events from a public iCalendar feed",
   "keywords": [
