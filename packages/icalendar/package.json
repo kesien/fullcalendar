@@ -1,6 +1,6 @@
 {
   "name": "icalendar_extension",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "title": "FullCalendar iCalendar Plugin Extension",
   "description": "Display events from a public iCalendar feed",
   "keywords": [
@@ -11,13 +11,13 @@
   "peerDependencies": {
     "@fullcalendar/core": "~6.1.5",
     "ical.js": "^1.4.0",
-    "moment-timezone": "^0.5.43"
+    "luxon": "^3.3.0"
   },
   "devDependencies": {
     "@fullcalendar/core": "~6.1.5",
     "@fullcalendar/standard-scripts": "*",
     "ical.js": "^1.4.0",
-    "moment-timezone": "^0.5.43"
+    "luxon": "^3.3.0"
   },
   "scripts": {
     "build": "standard-scripts pkg:build",
